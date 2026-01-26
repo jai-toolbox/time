@@ -1,4 +1,8 @@
+#load "section_timer.jai";
+
+
 #import "Basic";
+
 
 Periodic_Timer :: struct  {
     delta_times : [20] float;
@@ -30,6 +34,7 @@ get_average_delta_time :: (using ft : *Periodic_Timer) -> float {
 
 Periodic_Signal :: struct {
     frequency_hz : float;
+    // you don't have to pass this in when you make one.
     last_time : Apollo_Time;
 }
 
