@@ -1,3 +1,36 @@
+
+/*
+
+usage:
+
+main :: () {
+    timer: Section_Timer;
+    init_section_timer(*timer);
+    
+    for frame: 0..100 {
+        start_section(*timer, "tick");
+        
+        start_section(*timer, "update");
+        sleep_milliseconds(1);
+        end_section(*timer, "update");
+        
+        start_section(*timer, "rendering");
+        sleep_milliseconds(5);
+        end_section(*timer, "rendering");
+            
+        end_section(*timer, "tick");
+    }
+    
+    averaged := get_averaged_sections(*timer);
+    print_averaged_section(averaged.root);
+}
+
+
+*/
+
+
+
+
 #import "Basic";
 #import "Math";
 
