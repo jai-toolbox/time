@@ -4,15 +4,17 @@ Timer :: struct {
     running := false;
 }
 
-start :: (using t: *Timer, duration_seconds: float) {
-    duration_sec = duration_seconds;
+// why does start need a duration sec, it's should already be stored in the timer.
+
+
+start :: (using t: *Timer) {
     start_time = current_time_monotonic();
     running = true;
 }
 
-restart :: (using t: *Timer) {
-    start_time = current_time_monotonic();
-    running = true;
+change_duration_and_start :: (using t : *Timer, duration_seconds: float) {
+    duration_sec = duration_seconds;
+    start(t);
 }
 
 stop :: (using t: *Timer) {
@@ -20,6 +22,7 @@ stop :: (using t: *Timer) {
 }
 
 time_up :: (using t: *Timer, auto_stop := true) -> bool {
+    // it might be beneficial to make it return true if it's not running or something for first iteration logic.
     if !running return false;
     
     current_time := current_time_monotonic();
@@ -31,6 +34,10 @@ time_up :: (using t: *Timer, auto_stop := true) -> bool {
     }
     
     return false;
+}
+
+time_up_or_not_running :: (using t: *Timer) -> bool {
+    return !running || time_up(t);
 }
 
 get_elapsed :: (using t: *Timer) -> float {
