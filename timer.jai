@@ -4,9 +4,6 @@ Timer :: struct {
     running := false;
 }
 
-// why does start need a duration sec, it's should already be stored in the timer.
-
-
 start :: (using t: *Timer) {
     start_time = current_time_monotonic();
     running = true;
