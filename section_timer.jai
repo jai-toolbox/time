@@ -29,41 +29,55 @@ main :: () {
 */
 
 
-
-
 #import "Basic";
 #import "Math";
 
-MAX_SECTIONS :: 64;
+// this represents the maximum number of sections this system can keep track of at once.
+// in general if you're using this in a per-frame context then the number of sections gets reset at the end of every frame.
+MAX_SECTIONS :: 64; 
 MAX_HISTORY :: 20;
 MAX_CHILDREN :: 16;
 MAX_PATH_DEPTH :: 32;
 
 Timed_Section :: struct {
     name: string;
+
     start_time: Apollo_Time;
     end_time: Apollo_Time;
     elapsed_seconds: float;
     
-    children: [MAX_CHILDREN] *Timed_Section;
+    children: [MAX_CHILDREN] * Timed_Section;
     child_count: u32;
+
     parent: *Timed_Section;
     
     completed: bool;
 }
 
+// pool are like arenas, but they arrays of objects that always exist.
+
 Section_Timer :: struct {
+    // instead of creating new timed sections we always pull from an existing pool of sections.
     section_pool: [MAX_SECTIONS] Timed_Section;
     pool_index: u32;
     
+    // a collection of existing timed sections pointers indexed by the stack depth
     section_stack: [MAX_SECTIONS] *Timed_Section;
     stack_depth: u32;
     
     history: [MAX_HISTORY] *Timed_Section;
+
+    // we hold an array of histories, a singular history is just a [MAX_SECTIONS] Timed_Section;
+    // which represents the previous state of a section_pool
     history_pools: [MAX_HISTORY][MAX_SECTIONS] Timed_Section;
     history_index: u32;
     history_count: u32;
     
+    /*
+    If you're profiling a one shot program, then this is really just the root. 
+    But most interesting programs loop for a while, and the current root makes sense 
+    in this context as it refers to this frames timed section, which changes per frame.
+    */
     current_root: *Timed_Section;
 }
 
@@ -95,6 +109,7 @@ start_section :: (using st: *Section_Timer, name: string) {
     assert(pool_index < MAX_SECTIONS, "Section pool exhausted");
     
     // acquire a new section from the pool
+    // there is a guarentee that the pool index always points to a free section to use.
     section := *section_pool[pool_index];
     pool_index += 1;
     
@@ -119,7 +134,7 @@ start_section :: (using st: *Section_Timer, name: string) {
         parent.child_count += 1;
         section.parent = parent;
     } else {
-        current_root = section;
+        st.current_root = section;
     }
     
     section_stack[stack_depth] = section;
@@ -129,42 +144,53 @@ start_section :: (using st: *Section_Timer, name: string) {
 end_section :: (using st: *Section_Timer, name: string) {
     assert(stack_depth > 0, "No section to end");
     
-    section := section_stack[stack_depth - 1];
-    assert(section.name == name, "Section name mismatch: expected '%', got '%'", section.name, name);
+    section_we_are_ending := section_stack[stack_depth - 1];
+    assert(section_we_are_ending.name == name, "Section name mismatch: expected '%', got '%'", section_we_are_ending.name, name);
     
-    section.end_time = current_time_monotonic();
-    section.elapsed_seconds = cast(float) to_float64_seconds(section.end_time - section.start_time);
-    section.completed = true;
+    section_we_are_ending.end_time = current_time_monotonic();
+    section_we_are_ending.elapsed_seconds = cast(float) to_float64_seconds(section_we_are_ending.end_time - section_we_are_ending.start_time);
+    section_we_are_ending.completed = true;
     
     stack_depth -= 1;
     
+    // we only store the history of root level sections, this is important to remember!
+    // current_root could be null if you try and end a section before one has begun.
     if stack_depth == 0 && current_root != null {
-        store_in_history(st);
+        save_current_root_section_to_history(st);
     }
 }
 
-store_in_history :: (using st: *Section_Timer) {
+save_current_root_section_to_history :: (using st: *Section_Timer) {
+
     dest_pool := *history_pools[history_index];
-    copy_section_tree(current_root, dest_pool, 0);
+    copy_section_tree(current_root, dest_pool);
     
+    // after copying it into the pool, because the root section is stored as the first entry we can get a pointer to it.
     history[history_index] = *(<<dest_pool)[0];
     
+    // update the history index in a circular manner, when the number gets too big we clobber out the oldest one.
     history_index += 1;
     history_index %= MAX_HISTORY;
     
+    // when we're under the max, then we increase, if we're at the max, we just clobber out an old one and maintain max size.
     if history_count < MAX_HISTORY {
         history_count += 1;
     }
-    
+
+    // we only ever process one root section at a time, here we are resetting the pool so the next section can have fresh mem.
+    // this is like areana reset.
     pool_index = 0;
     current_root = null;
 }
 
-copy_section_tree :: (src: *Timed_Section, dest_pool: *[MAX_SECTIONS] Timed_Section, pool_offset: u32) -> u32 {
-    if src == null return pool_offset;
+// note the root section is stored as the first entry in the pool.
+copy_section_tree :: (src: *Timed_Section, dest_pool: *[MAX_SECTIONS] Timed_Section, pool_index_to_store_at: u32 = 0) -> pool_index_to_store_next_at: u32 {
+    if src == null return pool_index_to_store_at;
     
-    dest := *(<<dest_pool)[pool_offset];
+    // here we're getting a Timed_Section
+    dest := *(<<dest_pool)[pool_index_to_store_at];
     
+    // copy over the data.
     dest.name = src.name;
     dest.start_time = src.start_time;
     dest.end_time = src.end_time;
@@ -177,16 +203,17 @@ copy_section_tree :: (src: *Timed_Section, dest_pool: *[MAX_SECTIONS] Timed_Sect
         dest.children[i] = null;
     }
     
-    next_offset := pool_offset + 1;
+    pool_index_to_store_next_at := pool_index_to_store_at + 1;
     
+    // copy children over recursviely.
     for i: 0..cast(s64)src.child_count-1 {
         if src.children[i] != null {
-            dest.children[i] = *(<<dest_pool)[next_offset];
-            next_offset = copy_section_tree(src.children[i], dest_pool, next_offset);
+            dest.children[i] = *(<<dest_pool)[pool_index_to_store_next_at ];
+            pool_index_to_store_next_at = copy_section_tree(src.children[i], dest_pool, pool_index_to_store_next_at);
         }
     }
     
-    return next_offset;
+    return pool_index_to_store_next_at;
 }
 
 // path-based section finding using array of child indices
