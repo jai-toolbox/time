@@ -144,6 +144,12 @@ end_section :: (using st: *Section_Timer, name: string) {
     }
 }
 
+get_latest_completed_section :: (using st: *Section_Timer) -> *Timed_Section {
+    if completed_tree_count == 0 return null;
+    idx := (completed_tree_write_index - 1 + MAX_HISTORY) % MAX_HISTORY;
+    return completed_tree_roots[idx];
+}
+
 save_current_root_section_to_history :: (using st: *Section_Timer) {
     dest_pool := *completed_tree_pools[completed_tree_write_index];
     pool_reset(dest_pool);
