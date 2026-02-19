@@ -267,6 +267,22 @@ build_averaged_section_recursive :: (
     return dest;
 }
 
+
+print_timed_section_tree :: (section: *Timed_Section, indent: u32 = 0) {
+    if section == null return;
+
+    for i: 0..cast(s64) indent - 1  print("  ");
+    print("%: %ms\n",
+          section.name,
+          formatFloat(section.elapsed_seconds * 1000, trailing_width=3, zero_removal=.NO));
+
+    for i: 0..cast(s64) section.child_count - 1 {
+        if section.children[i] != null {
+            print_timed_section_tree(section.children[i], indent + 1);
+        }
+    }
+}
+
 print_averaged_section :: (section: *Averaged_Section, indent: u32 = 0, parent_avg_elapsed: float = 0.0) {
     if section == null return;
     
