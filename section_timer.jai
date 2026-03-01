@@ -55,6 +55,7 @@ Timed_Section :: struct {
 
 Section_Timer :: struct {
     // gets wiped out whenever the root section finishes.
+    // apparently jai has a pool allocator, can we use that instead?
     working_pool_for_current_section_tree: Fixed_Pool(Timed_Section, MAX_SECTIONS);
     
     section_stack: [MAX_SECTIONS] *Timed_Section;
