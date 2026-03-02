@@ -33,7 +33,7 @@ main :: () {
 #load "fixed_pool.jai";
 
 MAX_SECTIONS   :: 64;
-MAX_HISTORY    :: 20;
+MAX_HISTORY    :: 40;
 MAX_CHILDREN   :: 16;
 MAX_PATH_DEPTH :: 32;
 
