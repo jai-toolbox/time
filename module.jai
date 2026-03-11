@@ -9,6 +9,10 @@ minutes_to_seconds :: (minutes : u32) -> u32 {
     return minutes * 60;
 }
 
+milliseconds_to_microseconds :: (ms : float) -> u32 {
+    return xx (ms * 1000.0);
+}
+
 format_time :: (total_seconds: int) -> string {
     hours   := total_seconds / 3600;
     minutes := (total_seconds % 3600) / 60;
