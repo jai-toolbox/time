@@ -1,5 +1,5 @@
 Timer :: struct {
-    duration_sec: float;       
+    duration_sec: float;
     start_time: Apollo_Time;
     running := false;
 }
