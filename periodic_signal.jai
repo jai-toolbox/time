@@ -1,3 +1,9 @@
+/*
+
+A periodic signal is a tool to do something at a fixed frequency, when the signal is ready do the thing.
+
+*/
+
 Periodic_Signal :: struct {
     frequency_hz: float;
 
