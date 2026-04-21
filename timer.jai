@@ -51,6 +51,7 @@ get_remaining :: (using t: *Timer) -> float {
     return max(remaining, 0.0);
 }
 
+// todo rename to elapsed progress?
 get_progress :: (using t: *Timer) -> float {
     if !running return 0.0;
     if duration_sec <= 0.0 return 1.0;
