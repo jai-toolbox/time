@@ -7,7 +7,9 @@ Use this to figure out how frequently something is happening.
 */
 
 
-Periodic_Timer :: struct  {
+// compile time out the 20.
+
+Periodic_Timer :: struct {
     delta_times : [20] float;
     delta_time_index : u32;
     last_time : Apollo_Time;
