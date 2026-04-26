@@ -53,6 +53,11 @@ Timed_Section :: struct {
     completed: bool;
 }
 
+/*
+
+This doesn't use dynamic memory by default.
+
+*/
 Section_Timer :: struct {
     // gets wiped out whenever the root section finishes.
     // apparently jai has a pool allocator, can we use that instead?
