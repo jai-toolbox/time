@@ -2,6 +2,8 @@
 
 A periodic timer is like a stopwatch, when you press it over and over, it measures the average rate at which its being pressed. 
 
+Note that it doesn't use any dynamic memory.
+
 Use this to figure out how frequently something is happening.
 
 */
