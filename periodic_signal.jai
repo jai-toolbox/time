@@ -24,9 +24,25 @@ ready :: (using ps: *Periodic_Signal) -> bool {
 
     time_up := elapsed_time >= period;
 
-    // todo, if we're over the period we should probably play catchup
-    if time_up
-        last_time = current_time;
+    if time_up {
+        period_apollo := to_apollo(cast(float64) period);
+
+        way_behind_schedule := elapsed_time > period * 3.0;
+
+        if way_behind_schedule {
+            // when we're not calling this function fast enough, then we would go into a state where this function
+            // keeps returning true because the last_time += isn't getting us there for a while. This would make it
+            // appear like the signal fires a bunch at once, which is also not good, instead we just do this to resume
+            // normal cadence
+            last_time = current_time;
+        } else {
+            // by doing this we're moving time ahead by exactly a period
+            // as compared to assigning last_time to current time, this accounts
+            // for the time since the signal would have been emitted, and when we call ready
+            // if we're late, then that means that the next signal will come up sooner to account for it
+            last_time += period_apollo;
+        }
+    }
 
     return time_up;
 }
