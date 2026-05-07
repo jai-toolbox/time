@@ -37,6 +37,7 @@ MAX_HISTORY    :: 40;
 MAX_CHILDREN   :: 16;
 MAX_PATH_DEPTH :: 32;
 
+// You may want to heap allocate this because of the pool which can be large.
 Timed_Section :: struct {
     name: string;
 
@@ -93,7 +94,7 @@ Averaged_Section_Result :: struct {
     pool: Fixed_Pool(Averaged_Section, MAX_SECTIONS);
 }
 
-init_section_timer :: (using st: *Section_Timer) {
+init :: (using st: *Section_Timer) {
     pool_reset(*working_pool_for_current_section_tree);
     stack_depth = 0;
     completed_tree_write_index = 0;
