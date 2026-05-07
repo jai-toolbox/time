@@ -38,3 +38,7 @@ get_average_delta_time :: (using ft : *Periodic_Timer) -> float {
     for 0..19 total_delta_time += delta_times[it];
     return total_delta_time / 20;
 }
+
+get_average_rate :: (using pt : *Periodic_Timer) -> float {
+    return 1 / get_average_delta_time(pt);
+}
