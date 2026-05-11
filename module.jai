@@ -26,3 +26,19 @@ format_time :: (total_seconds: int) -> string {
         return tprint("%", seconds);
     }
 }
+
+get_timestamp :: () -> string {
+    now := current_time_consensus();
+    cal := to_calendar(now, .LOCAL);
+
+    total_us, success := to_microseconds(now);
+    microseconds := total_us % 1_000_000;
+    if microseconds < 0  microseconds += 1_000_000;
+
+    return tprint("[%:%:%.%]",
+        formatInt(cal.hour,   minimum_digits=2),
+        formatInt(cal.minute, minimum_digits=2),
+        formatInt(cal.second, minimum_digits=2),
+        formatInt(microseconds, minimum_digits=6)
+    );
+}
